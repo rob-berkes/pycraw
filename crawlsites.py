@@ -4,6 +4,7 @@ import urllib2
 import socket
 import psycopg2 
 from bs4 import BeautifulSoup
+from datetime import datetime
 import re
 
 timeout = 5
@@ -25,6 +26,7 @@ cur = conn.cursor()
 def procAllLinks(soup,url):
   BASEURL = url
   ofile = open('newlinks.log','a')
+  indexed = datetime.now()
   for link in soup.find_all('a'):
     url = BASEURL
     if re.match(exlink,link.get('href')) or re.match(exslink,link.get('href')):
@@ -53,6 +55,7 @@ def procAllLinks(soup,url):
       print "-**************Indexing Local link: ",
       print url +" *************-"
       print html
+      cur.execute("INSERT INTO visits (url, indexed) VALUES (%s, %s)", (url, indexed))
       for word in full_text:
         entry = Word()
         entry.word = word.lower()
@@ -81,6 +84,10 @@ def procAllLinks(soup,url):
 
 for line in ifp:
   line = line.strip().split()
+  hostn , aliasl, ipl = socket.gethostbyaddr(str(line[1]))
+  host = socket.getfqdn(hostn)
+  print host
+  quit()
   url = 'http://'+str(line[1])+'/'
   req = urllib2.Request(url)
   html = ''

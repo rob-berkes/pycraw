@@ -4,6 +4,9 @@ cur  = conn.cursor()
 cur.execute("SELECT * from crawls;")
 print "Total words indexed: ",
 print cur.rowcount
+cur.execute("SELECT * FROM visits;")
+print "Total pages indexed: ",
+print cur.rowcount
 print "Instances of: "
 print "=============="
 cur.execute("SELECT * from crawls WHERE word='the';")
