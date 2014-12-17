@@ -9,13 +9,13 @@ print "=============="
 cur.execute("SELECT * from crawls WHERE word='the';")
 print "the : ",
 print cur.rowcount
-cur.execute("SELECT * from crawls WHERE word='rob';")
-print "rob : ",
+cur.execute("SELECT * from crawls WHERE word='robert';")
+print "robert : ",
 print cur.rowcount
 cur.execute("SELECT * from crawls WHERE word='obama';")
 print "obama : ",
 print cur.rowcount
-cur.execute("SELECT * from crawls WHERE word='osama';")
-print "osama : ",
+cur.execute("SELECT * from crawls WHERE word='america';")
+print "america : ",
 print cur.rowcount
 
