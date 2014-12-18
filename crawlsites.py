@@ -121,7 +121,7 @@ for line in ifp:
 #  quit()
   url = 'http://'+str(line[1])+'/'
   req = urllib2.Request(url)
-  html = 'http://www.wisc.edu'
+  html = ''
   try:
     html = urllib2.urlopen(req)
   except urllib2.HTTPError:
@@ -141,5 +141,8 @@ for line in ifp:
     soup = BeautifulSoup(html)
   except TypeError:
     print "e12 TE"
+    pass
+  except socket.timeout:
+    print "e13 socket timeout"
     pass
   procAllLinks(soup,url)
