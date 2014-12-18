@@ -45,7 +45,11 @@ def procAllLinks(soup,url):
         LINKCOUNT+=1
         if LINKCOUNT > MAXLOCALLINKCOUNT:
           break
-        url = BASEURL +str(link.get('href'))
+        try:
+          url = BASEURL +str(link.get('href'))
+        except UnicodeEncodeError:
+          LINKCOUNT-=1
+          pass
         req = urllib2.Request(url)
         html = ''
         try:
@@ -109,7 +113,10 @@ for line in ifp:
   print "-======= site: "+str(line[1])+" =======-"
   print html
   print "now indexing ..."
-  soup = BeautifulSoup(html)
+  try:
+    soup = BeautifulSoup(html)
+  except TypeError:
+    pass
   procAllLinks(soup,url)
  
 #  try:
