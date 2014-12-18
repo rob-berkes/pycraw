@@ -1,9 +1,8 @@
-import wget 
 import time
 import urllib2
 import socket
 import psycopg2 
-from bs4 import BeautifulSoup
+import BeautifulSoup
 from datetime import datetime
 import re
 MAXLOCALLINKCOUNT = 20
@@ -13,7 +12,7 @@ socket.setdefaulttimeout(timeout)
 exlink = re.compile(r'(http://)(.*)')
 exslink = re.compile(r'(https://)(.*)')
 
-ifp=open('54-149-p80.log','r')
+ifp=open('54-145-p80.log','r')
 class Word:
    url = ''
    word = ''
@@ -70,11 +69,12 @@ def procAllLinks(soup,url):
           entry.word = word.lower()
           entry.position = COUNT
           entry.url = url
+    	  print entry.word, '\t',entry.position,'\t', entry.url
           cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
           COUNT+=1
     except TypeError:
       pass
-  url = url
+  url = BASEURL
   req = urllib2.Request(url)
   try:
     html = urllib2.urlopen(req)
@@ -83,11 +83,13 @@ def procAllLinks(soup,url):
   full_text = soup.get_text()
   full_text = full_text.strip().split()
   COUNT=1
+  cur.execute("INSERT INTO visits (url, indexed) VALUES (%s, %s)", (url, indexed))
   for word in full_text:
     entry = Word()
     entry.word = word.lower()
     entry.position = COUNT
     entry.url = url
+    print entry.word, '\t',entry.position,'\t', entry.url
     cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
     COUNT+=1
   ofile.close() 
@@ -109,17 +111,12 @@ for line in ifp:
     pass
   except:
     pass
-  
+  soup='' 
   print "-======= site: "+str(line[1])+" =======-"
   print html
   print "now indexing ..."
   try:
     soup = BeautifulSoup(html)
+    procAllLinks(soup,url)
   except TypeError:
     pass
-  procAllLinks(soup,url)
- 
-#  try:
-#    wget.download(url,out='html/'+str(line[1])+'index.html')
-#  except IOError:
-#    continue
