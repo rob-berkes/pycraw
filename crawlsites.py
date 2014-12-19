@@ -12,7 +12,7 @@ socket.setdefaulttimeout(timeout)
 exlink = re.compile(r'(http://)(.*)')
 exslink = re.compile(r'(https://)(.*)')
 
-ifp=open('54-145-p80.log','r')
+ifp=open('54-148-p80.log','r')
 class Word:
    url = ''
    word = ''
@@ -44,16 +44,9 @@ def procAllLinks(soup,url):
         try:
           ofile.write(link.get('href'))
           ofile.write('\n')
-        except TypeError:
-          print 'e1'
-          pass
-        except UnicodeDecodeError:
-  	  print 'e2 ude'
-	  pass
-        except UnicodeEncodeError:
-	  print 'e3 uee'
-	  pass
-      else:
+        except :
+          print 'output file write error'
+          continue
         LINKCOUNT+=1
         if LINKCOUNT > MAXLOCALLINKCOUNT:
           break
@@ -62,17 +55,14 @@ def procAllLinks(soup,url):
         except UnicodeEncodeError:
 	  print 'e4 uee'
           LINKCOUNT-=1
-          pass
+          continue
         req = urllib2.Request(url)
         html = ''
         try:
           html = urllib2.urlopen(req)
-        except urllib2.HTTPError:
-	  print 'e5 uHE'
-          pass
-        except urllib2.URLError:
-	  print 'e6 uUE'
-          pass
+        except:
+	  print 'url open error e5 uHE'
+          continue
         full_text = soup.get_text()
         full_text = full_text.strip().split()
         COUNT=1
@@ -86,19 +76,18 @@ def procAllLinks(soup,url):
           entry.word = word.lower()
           entry.position = COUNT
           entry.url = url
-    	  print entry.word, '\t',entry.position,'\t', entry.url
+    #	  print entry.word, '\t',entry.position,'\t', entry.url
           cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
           COUNT+=1
     except TypeError:
       print 'e7 TE'
-      pass
+      continue
   url = BASEURL
   req = urllib2.Request(url)
   try:
     html = urllib2.urlopen(req)
   except:
     print 'e8 generic'
-    pass
   full_text = soup.get_text()
   full_text = full_text.strip().split()
   COUNT=1
@@ -108,41 +97,28 @@ def procAllLinks(soup,url):
     entry.word = word.lower()
     entry.position = COUNT
     entry.url = url
-    print entry.word, '\t',entry.position,'\t', entry.url
+   # print entry.word, '\t',entry.position,'\t', entry.url
     cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
     COUNT+=1
   ofile.close() 
 
 for line in ifp:
   line = line.strip().split()
-#  hostn , aliasl, ipl = socket.gethostbyaddr(str(line[1]))
-#  host = socket.getfqdn(hostn)
-#  print host
-#  quit()
   url = 'http://'+str(line[1])+'/'
   req = urllib2.Request(url)
   html = ''
   try:
     html = urllib2.urlopen(req)
-  except urllib2.HTTPError:
-    print 'e9 uHE'
-    pass
-  except urllib2.URLError:
-    print 'e10 uUE'
-    pass
   except:
-    print 'e11 generic'
-    pass
+    print ' url open exception'
+    continue
   soup='' 
   print "-======= site: "+str(line[1])+" =======-"
   print html
   print "now indexing ..."
   try:
     soup = BeautifulSoup(html)
-  except TypeError:
-    print "e12 TE"
-    pass
-  except socket.timeout:
-    print "e13 socket timeout"
-    pass
+  except:
+    print " soup exception"
+    continue
   procAllLinks(soup,url)
