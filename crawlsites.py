@@ -4,15 +4,16 @@ import socket
 import psycopg2 
 from bs4 import BeautifulSoup
 from datetime import datetime
+from lib.words import IgnoredList
 import re
-MAXLOCALLINKCOUNT = 20
+import os
+MAXLOCALLINKCOUNT = 30
 timeout = 5
 socket.setdefaulttimeout(timeout)
 
 exlink = re.compile(r'(http://)(.*)')
 exslink = re.compile(r'(https://)(.*)')
 
-ifp=open('54-148-p80.log','r')
 class Word:
    url = ''
    word = ''
@@ -31,6 +32,7 @@ def sanitize (word):
   word = word.strip(';')
   
   return word
+
 
 def procAllLinks(soup,url):
   BASEURL = url
@@ -77,7 +79,8 @@ def procAllLinks(soup,url):
           entry.position = COUNT
           entry.url = url
     #	  print entry.word, '\t',entry.position,'\t', entry.url
-          cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
+	  if word.lower() not in IgnoredList:
+            cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
           COUNT+=1
     except TypeError:
       print 'e7 TE'
@@ -98,27 +101,40 @@ def procAllLinks(soup,url):
     entry.position = COUNT
     entry.url = url
    # print entry.word, '\t',entry.position,'\t', entry.url
-    cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
+    if word.lower() not in IgnoredList:
+      cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
     COUNT+=1
   ofile.close() 
 
-for line in ifp:
-  line = line.strip().split()
-  url = 'http://'+str(line[1])+'/'
-  req = urllib2.Request(url)
-  html = ''
+
+
+
+ANET=54
+for BNET in range(81,85):
+  FNAME='scans/'+str(ANET)+'-'+str(BNET)+'--p80.log'
   try:
-    html = urllib2.urlopen(req)
+    ifp=open(FNAME,'r')
   except:
-    print ' url open exception'
     continue
-  soup='' 
-  print "-======= site: "+str(line[1])+" =======-"
-  print html
-  print "now indexing ..."
-  try:
-    soup = BeautifulSoup(html)
-  except:
-    print " soup exception"
-    continue
-  procAllLinks(soup,url)
+  for line in ifp:
+    line = line.strip().split()
+    url = 'http://'+str(line[1])+'/'
+    req = urllib2.Request(url)
+    html = ''
+    try:
+      html = urllib2.urlopen(req)
+    except:
+      print ' url open exception'
+      continue
+    soup='' 
+    print "-======= site: "+str(line[1])+" =======-"
+    print html
+    print "now indexing ..."
+    try:
+      soup = BeautifulSoup(html)
+    except:
+      print " soup exception"
+      continue
+    procAllLinks(soup,url)
+ifp.close()
+os.remove(FNAME)
