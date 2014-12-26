@@ -66,12 +66,16 @@ def procAllLinks(soup,url):
         except:
 	  print 'url open error e5 uHE'
           continue
-        full_text = soup.get_text()
-        full_text = full_text.strip().split()
         COUNT=1
+	LINKID=0
         print "-**************Indexing Local link: ",
         print url +" *************-"
         print html
+  	full_text = soup.get_text()
+	cur.execute("INSERT INTO textlinks (url, fulltext) VALUES(%s, %s)",(url,str(full_text)))
+        cur.execute("SELECT linkid FROM textlinks WHERE url = %s",(url,))
+	LINKID=cur.fetchone()[0] 
+	full_text = full_text.strip().split()
         cur.execute("INSERT INTO visits (url, indexed) VALUES (%s, %s)", (url, indexed))
         for word in full_text:
 	  word = sanitize(word)
@@ -81,7 +85,7 @@ def procAllLinks(soup,url):
           entry.url = url
     #	  print entry.word, '\t',entry.position,'\t', entry.url
 	  if word.lower() not in IgnoredList:
-            cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
+            cur.execute("INSERT INTO crawls (word, position, url,linkid) VALUES (%s, %s, %s, %s)", (entry.word,entry.position,entry.url,LINKID))
           COUNT+=1
     except TypeError:
       print 'e7 TE'
@@ -111,7 +115,7 @@ def procAllLinks(soup,url):
 
 
 ANET=54
-for BNET in range(140,150):
+for BNET in range(64,70):
   FNAME='scans/'+str(ANET)+'-'+str(BNET)+'--p80.log'
   try:
     ifp=open(FNAME,'r')
