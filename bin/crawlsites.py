@@ -43,9 +43,11 @@ def procAllLinks(soup,url):
   for link in soup.find_all('a'):
     url = BASEURL
     try:
-      if re.match(exlink,link.get('href')) or re.match(exslink,link.get('href')):
+      HR = link.get('href')
+      print HR
+      if not re.match(exlink,HR) and not re.match(exslink,HR):
         try:
-          ofile.write(link.get('href'))
+          ofile.write(HR)
           ofile.write('\n')
         except :
           print 'output file write error'
@@ -54,7 +56,7 @@ def procAllLinks(soup,url):
         if LINKCOUNT > MAXLOCALLINKCOUNT:
           break
         try:
-          url = BASEURL +str(link.get('href'))
+          url = BASEURL +unicode(HR)
         except UnicodeEncodeError:
 	  print 'e4 uee'
           LINKCOUNT-=1
@@ -62,6 +64,7 @@ def procAllLinks(soup,url):
         req = urllib2.Request(url)
         html = ''
         try:
+    	  print url
           html = urllib2.urlopen(req)
         except:
 	  print 'url open error e5 uHE'
@@ -72,7 +75,7 @@ def procAllLinks(soup,url):
         print url +" *************-"
         print html
   	full_text = soup.get_text()
-	cur.execute("INSERT INTO textlinks (url, fulltext) VALUES(%s, %s)",(url,str(full_text)))
+	cur.execute("INSERT INTO textlinks (url, fulltext) VALUES(%s, %s)",(unicode(url),unicode(full_text)))
         cur.execute("SELECT linkid FROM textlinks WHERE url = %s",(url,))
 	LINKID=cur.fetchone()[0] 
 	full_text = full_text.strip().split()
