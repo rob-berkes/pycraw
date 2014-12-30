@@ -13,6 +13,7 @@ socket.setdefaulttimeout(timeout)
 
 exlink = re.compile(r'(http://)(.*)')
 exslink = re.compile(r'(https://)(.*)')
+javascriptlink = re.compile(r'(javascript)(.*)')
 
 class Word:
    url = ''
@@ -45,7 +46,9 @@ def procAllLinks(soup,url):
     try:
       HR = link.get('href')
       print HR
-      if not re.match(exlink,HR) and not re.match(exslink,HR):
+      if not re.match(exlink,HR) and not \
+	     re.match(exslink,HR) and not \
+	     re.match(javascriptlink,HR):
         try:
           ofile.write(HR)
           ofile.write('\n')
@@ -118,7 +121,7 @@ def procAllLinks(soup,url):
 
 
 ANET=54
-for BNET in range(64,70):
+for BNET in range(65,70):
   FNAME='scans/'+str(ANET)+'-'+str(BNET)+'--p80.log'
   try:
     ifp=open(FNAME,'r')
