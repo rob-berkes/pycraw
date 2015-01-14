@@ -1,152 +1,62 @@
 import time
 import urllib2
 import socket
-import psycopg2 
 from bs4 import BeautifulSoup
 from datetime import datetime
-from lib.words import IgnoredList
-import re
 import os
-import pydoop.hdfs
-
+import pydoop.hdfs as hdfs
+import happybase
+conn=happybase.Connection('127.0.0.1')
+crawls=conn.table('crawls')
+hdfs.mkdir('crawls/')
 MAXLOCALLINKCOUNT = 30
 timeout = 5
 socket.setdefaulttimeout(timeout)
-
-exlink = re.compile(r'(http://)(.*)')
-exslink = re.compile(r'(https://)(.*)')
-javascriptlink = re.compile(r'(javascript)(.*)')
-
-class Word:
-   url = ''
-   word = ''
-   position = 0
-   linktextid = ''
-
-conn= psycopg2.connect("dbname=words user=postgres")
-conn.autocommit = True
-cur = conn.cursor()
-
-def sanitize (word):
-  word = word.strip('#')
-  word = word.strip(',')
-  word = word.strip('.')
-  word = word.strip('!')
-  word = word.strip('?')
-  word = word.strip(';')
-  
-  return word
-
-
-def procAllLinks(soup,url):
-  BASEURL = url
-  ofile = open('newlinks.log','a')
-  indexed = datetime.now()
-  LINKCOUNT = 0
-  for link in soup.find_all('a'):
-    url = BASEURL
-    try:
-      HR = link.get('href')
-      print HR
-      if not re.match(exlink,HR) and not \
-	     re.match(exslink,HR) and not \
-	     re.match(javascriptlink,HR):
-        try:
-          ofile.write(HR)
-          ofile.write('\n')
-        except :
-          print 'output file write error'
-          continue
-        LINKCOUNT+=1
-        if LINKCOUNT > MAXLOCALLINKCOUNT:
-          break
-        try:
-          url = BASEURL +unicode(HR)
-        except UnicodeEncodeError:
-	  print 'e4 uee'
-          LINKCOUNT-=1
-          continue
-        req = urllib2.Request(url)
-        html = ''
-        try:
-    	  print url
-          html = urllib2.urlopen(req)
-        except:
-	  print 'url open error e5 uHE'
-          continue
-        COUNT=1
-	LINKID=0
-        print "-**************Indexing Local link: ",
-        print url +" *************-"
-  	full_text = soup.get_text()
-	cur.execute("INSERT INTO textlinks (url, fulltext) VALUES(%s, %s)",(unicode(url),unicode(full_text)))
-        cur.execute("SELECT linkid FROM textlinks WHERE url = %s",(url,))
-	LINKID=cur.fetchone()[0] 
-	full_text = full_text.strip().split()
-        cur.execute("INSERT INTO visits (url, indexed) VALUES (%s, %s)", (url, indexed))
-        for word in full_text:
-	  word = sanitize(word)
-          entry = Word()
-          entry.word = word.lower()
-          entry.position = COUNT
-          entry.url = url
-    #	  print entry.word, '\t',entry.position,'\t', entry.url
-	  if word.lower() not in IgnoredList:
-            cur.execute("INSERT INTO crawls (word, position, url,linkid) VALUES (%s, %s, %s, %s)", (entry.word,entry.position,entry.url,LINKID))
-          COUNT+=1
-    except TypeError:
-      print 'e7 TE'
-      continue
-  url = BASEURL
-  req = urllib2.Request(url)
+DATESTRING=str(time.strftime('%Y%m%d'))
+ANET=125
+hdfs.mkdir('crawls/'+str(ANET)+'/')
+for BNET in range(18,22):
+  SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
+  FNAME='scans/'+str(ANET)+'/'+SCANSITESFILE
+  hdfs.get(FNAME,SCANSITESFILE)
   try:
-    html = urllib2.urlopen(req)
-  except:
-    print 'e8 generic'
-  full_text = soup.get_text()
-  full_text = full_text.strip().split()
-  COUNT=1
-  cur.execute("INSERT INTO visits (url, indexed) VALUES (%s, %s)", (url, indexed))
-  for word in full_text:
-    entry = Word()
-    entry.word = word.lower()
-    entry.position = COUNT
-    entry.url = url
-   # print entry.word, '\t',entry.position,'\t', entry.url
-    if word.lower() not in IgnoredList:
-      cur.execute("INSERT INTO crawls (word, position, url) VALUES (%s, %s, %s)", (entry.word,entry.position,entry.url))
-    COUNT+=1
-  ofile.close() 
-
-
-
-
-ANET=54
-for BNET in range(65,70):
-  OUTNAME=str(ANET)+'-'+str(BNET)+'-p80.log'
-  FNAME='scans/'+str(ANET)+'/'+OUTNAME
-  hdfs.get(FNAME,OUTNAME)
-  try:
-    ifp=open(OUTNAME,'r')
+   ifp=open(SCANSITESFILE,'r')
   except:
     continue
   for line in ifp:
     line = line.strip().split()
     url = 'http://'+str(line[1])+'/'
-    req = urllib2.Request(url)
+#    req = urllib2.Request(url)
     html = ''
     try:
-      html = urllib2.urlopen(req)
+      html = urllib2.urlopen(url)
     except:
-      print ' url open exception'
+      print ' url open exception on '+str(url)
       continue
-    soup='' 
-    print "-======= site: "+str(line[1])+" =======-"
+    soup=''
+    HTMLFILE=str(line[1])+'_root'+DATESTRING
+    TEXTFILE=str(line[1])+'_roottext_'+DATESTRING
+    HADOOP_HTMLFILE='crawls/'+str(ANET)+'/'+HTMLFILE
+    HADOOP_TEXTFILE='texts/'+str(ANET)+'/'+TEXTFILE
+    crawls.put(HTMLFILE,{'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE})
+    print "-======= site: "+str(url)+" =======-"
     try:
       soup = BeautifulSoup(html)
     except:
       print " soup exception"
       continue
-    procAllLinks(soup,url)
+    HFP=open(HTMLFILE,'w')
+    HFP.write(soup.encode('utf-8'))
+    HFP.close()
+    TFP=open(TEXTFILE,'w')
+    WRITEOUT=unicode(soup.get_text())
+    TFP.write(WRITEOUT.encode('utf-8'))
+    TFP.close()
+    time.sleep(1)
+    
+    hdfs.put(HTMLFILE,HADOOP_HTMLFILE)
+    hdfs.put(TEXTFILE,HADOOP_TEXTFILE)
+    os.remove(HTMLFILE)
+    os.remove(TEXTFILE)
   ifp.close()
-  os.remove(OUTNAME)
+  os.remove(SCANSITESFILE)
