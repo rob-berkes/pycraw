@@ -15,7 +15,10 @@ socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
 ANET=125
 hdfs.mkdir('crawls/'+str(ANET)+'/')
-for BNET in range(18,22):
+hdfs.mkdir('texts/'+str(ANET)+'/')
+for BNET in range(40,50):
+  hdfs.mkdir('crawls/'+str(ANET)+'/'+str(BNET)+'/')
+  hdfs.mkdir('texts/'+str(ANET)+'/'+str(BNET)+'/')
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
   FNAME='scans/'+str(ANET)+'/'+SCANSITESFILE
   hdfs.get(FNAME,SCANSITESFILE)
@@ -26,19 +29,18 @@ for BNET in range(18,22):
   for line in ifp:
     line = line.strip().split()
     url = 'http://'+str(line[1])+'/'
-#    req = urllib2.Request(url)
+    req = urllib2.Request(url)
     html = ''
     try:
-      html = urllib2.urlopen(url)
+      html = urllib2.urlopen(req)
     except:
       print ' url open exception on '+str(url)
       continue
     soup=''
-    HTMLFILE=str(line[1])+'_root'+DATESTRING
+    HTMLFILE=str(line[1])+'_root'+DATESTRING+'.htm'
     TEXTFILE=str(line[1])+'_roottext_'+DATESTRING
-    HADOOP_HTMLFILE='crawls/'+str(ANET)+'/'+HTMLFILE
-    HADOOP_TEXTFILE='texts/'+str(ANET)+'/'+TEXTFILE
-    crawls.put(HTMLFILE,{'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE})
+    HADOOP_HTMLFILE='crawls/'+str(ANET)+'/'+str(BNET)+'/'+HTMLFILE
+    HADOOP_TEXTFILE='texts/'+str(ANET)+'/'+str(BNET)+'/'+TEXTFILE
     print "-======= site: "+str(url)+" =======-"
     try:
       soup = BeautifulSoup(html)
@@ -54,8 +56,21 @@ for BNET in range(18,22):
     TFP.close()
     time.sleep(1)
     
-    hdfs.put(HTMLFILE,HADOOP_HTMLFILE)
-    hdfs.put(TEXTFILE,HADOOP_TEXTFILE)
+    try:
+      hdfs.put(HTMLFILE,HADOOP_HTMLFILE)
+    except IOError:
+      print 'IOError on '+str(url)
+      os.remove(HTMLFILE)
+      os.remove(TEXTFILE)
+      continue
+    try:  
+      hdfs.put(TEXTFILE,HADOOP_TEXTFILE)
+    except IOError:
+      print 'IOError on '+str(url)
+      os.remove(HTMLFILE)
+      os.remove(TEXTFILE)
+      continue
+    crawls.put(HTMLFILE,{'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE})
     os.remove(HTMLFILE)
     os.remove(TEXTFILE)
   ifp.close()
