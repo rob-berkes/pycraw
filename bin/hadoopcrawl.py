@@ -16,7 +16,7 @@ DATESTRING=str(time.strftime('%Y%m%d'))
 ANET=125
 hdfs.mkdir('crawls/'+str(ANET)+'/')
 hdfs.mkdir('texts/'+str(ANET)+'/')
-for BNET in range(40,50):
+for BNET in range(80,90):
   hdfs.mkdir('crawls/'+str(ANET)+'/'+str(BNET)+'/')
   hdfs.mkdir('texts/'+str(ANET)+'/'+str(BNET)+'/')
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
