@@ -1,3 +1,4 @@
+from pywebhdfs.webhdfs import PyWebHdfsClient
 import time
 import urllib2
 import socket
@@ -6,22 +7,20 @@ from datetime import datetime
 import os
 import pydoop.hdfs as hdfs
 import happybase
+client=PyWebHdfsClient(host='namenode',port='50070',user='root')
 conn=happybase.Connection('127.0.0.1')
 crawls=conn.table('crawls')
-hdfs.mkdir('crawls/')
 MAXLOCALLINKCOUNT = 30
 timeout = 5
 socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
 ANET=125
-hdfs.mkdir('crawls/'+str(ANET)+'/')
-hdfs.mkdir('texts/'+str(ANET)+'/')
 for BNET in range(80,90):
-  hdfs.mkdir('crawls/'+str(ANET)+'/'+str(BNET)+'/')
-  hdfs.mkdir('texts/'+str(ANET)+'/'+str(BNET)+'/')
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
-  FNAME='scans/'+str(ANET)+'/'+SCANSITESFILE
-  hdfs.get(FNAME,SCANSITESFILE)
+  FNAME='user/root/scans/'+str(ANET)+'/'+SCANSITESFILE
+  SSFP=open(SCANSITESFILE,'w')
+  SSFP.write(client.read_file(FNAME))
+  SSFP.close()
   try:
    ifp=open(SCANSITESFILE,'r')
   except:
@@ -39,8 +38,8 @@ for BNET in range(80,90):
     soup=''
     HTMLFILE=str(line[1])+'_root'+DATESTRING+'.htm'
     TEXTFILE=str(line[1])+'_roottext_'+DATESTRING
-    HADOOP_HTMLFILE='crawls/'+str(ANET)+'/'+str(BNET)+'/'+HTMLFILE
-    HADOOP_TEXTFILE='texts/'+str(ANET)+'/'+str(BNET)+'/'+TEXTFILE
+    HADOOP_HTMLFILE='user/root/crawls/'+str(ANET)+'/'+str(BNET)+'/'+HTMLFILE
+    HADOOP_TEXTFILE='user/root/texts/'+str(ANET)+'/'+str(BNET)+'/'+TEXTFILE
     print "-======= site: "+str(url)+" =======-"
     try:
       soup = BeautifulSoup(html)
