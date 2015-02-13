@@ -38,8 +38,8 @@ for BNET in range(0,11):
       print ' url open exception on '+str(url)
       continue
     soup=''
-    HTMLFILE=str(line[1])+'_root'+DATESTRING+'.htm'
-    TEXTFILE=str(line[1])+'_roottext_'+DATESTRING
+    HTMLFILE=str(line[1])+'.htm'
+    TEXTFILE=str(line[1])+'.txt'
     HADOOP_HTMLFILE='user/root/crawls/'+str(ANET)+'/'+str(BNET)+'/'+HTMLFILE
     HADOOP_TEXTFILE='user/root/texts/'+str(ANET)+'/'+str(BNET)+'/'+TEXTFILE
     print "-======= site: "+str(url)+" =======-"
@@ -51,7 +51,8 @@ for BNET in range(0,11):
     HFP=open(HTMLFILE,'w')
     HFP.write(soup.encode('utf-8'))
     HFP.close()
-    client.create_file(HADOOP_HTMLFILE,HTMLFILE)
+    with open(HTMLFILE) as hfp:
+      client.create_file(HADOOP_HTMLFILE,hfp)
 
     TFP=open(TEXTFILE,'w')
     WRITEOUT=unicode(soup.get_text())
@@ -59,11 +60,12 @@ for BNET in range(0,11):
     WORDLIST=WORDLIST.strip().split()
     TFP.write(WRITEOUT.encode('utf-8'))
     TFP.close()
-    client.create_file(HADOOP_TEXTFILE,TEXTFILE)
+    with open(TEXTFILE) as tfp:
+	client.create_file(HADOOP_TEXTFILE,tfp)
 
     time.sleep(1)
     
-    crawls.put(line[1],{'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE,'METADATA:scanLocation':FNAME,'PAGEDATA:wordlist':pickle.dumps(WORDLIST)})
+    crawls.put(line[1],{'METADATA:daterun':DATESTRING,'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE,'METADATA:scanLocation':FNAME,'PAGEDATA:wordlist':pickle.dumps(WORDLIST)})
     os.remove(HTMLFILE)
     os.remove(TEXTFILE)
   ifp.close()
