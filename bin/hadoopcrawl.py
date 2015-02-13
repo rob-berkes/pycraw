@@ -5,17 +5,19 @@ import socket
 from bs4 import BeautifulSoup
 from datetime import datetime
 import os
-import pydoop.hdfs as hdfs
 import happybase
-client=PyWebHdfsClient(host='namenode',port='50070',user='root')
+import re
+import pickle
+
+client=PyWebHdfsClient(host='namenode',port='50070',user_name='root')
 conn=happybase.Connection('127.0.0.1')
 crawls=conn.table('crawls')
 MAXLOCALLINKCOUNT = 30
 timeout = 5
 socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
-ANET=125
-for BNET in range(80,90):
+ANET=60
+for BNET in range(0,11):
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
   FNAME='user/root/scans/'+str(ANET)+'/'+SCANSITESFILE
   SSFP=open(SCANSITESFILE,'w')
@@ -49,27 +51,19 @@ for BNET in range(80,90):
     HFP=open(HTMLFILE,'w')
     HFP.write(soup.encode('utf-8'))
     HFP.close()
+    client.create_file(HADOOP_HTMLFILE,HTMLFILE)
+
     TFP=open(TEXTFILE,'w')
     WRITEOUT=unicode(soup.get_text())
+    WORDLIST=re.sub(r'[^a-zA-Z0-9 ]',r' ',WRITEOUT)
+    WORDLIST=WORDLIST.strip().split()
     TFP.write(WRITEOUT.encode('utf-8'))
     TFP.close()
+    client.create_file(HADOOP_TEXTFILE,TEXTFILE)
+
     time.sleep(1)
     
-    try:
-      hdfs.put(HTMLFILE,HADOOP_HTMLFILE)
-    except IOError:
-      print 'IOError on '+str(url)
-      os.remove(HTMLFILE)
-      os.remove(TEXTFILE)
-      continue
-    try:  
-      hdfs.put(TEXTFILE,HADOOP_TEXTFILE)
-    except IOError:
-      print 'IOError on '+str(url)
-      os.remove(HTMLFILE)
-      os.remove(TEXTFILE)
-      continue
-    crawls.put(HTMLFILE,{'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE})
+    crawls.put(line[1],{'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE,'METADATA:scanLocation':FNAME,'PAGEDATA:wordlist':pickle.dumps(WORDLIST)})
     os.remove(HTMLFILE)
     os.remove(TEXTFILE)
   ifp.close()
