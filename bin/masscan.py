@@ -1,7 +1,5 @@
 from pywebhdfs.webhdfs import PyWebHdfsClient
-#from hdfs import Client
 import subprocess
-#import pydoop.hdfs as hdfs
 import time
 hdfs = PyWebHdfsClient(host='namenode',port='50070',user_name='root')
 for  a_net in range(54,55):
@@ -12,5 +10,6 @@ for  a_net in range(54,55):
     A.wait()
     time.sleep(2)
     HADOOP_FILE_NAME='user/root/scans/'+str(a_net)+'/'+OFILE
-    hdfs.create_file(HADOOP_FILE_NAME,OFILE)
+    with open(OFILE) as ofp:
+      hdfs.create_file(HADOOP_FILE_NAME,ofp)
     subprocess.Popen(['rm',OFILE])
