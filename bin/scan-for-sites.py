@@ -1,7 +1,9 @@
 from pywebhdfs.webhdfs import PyWebHdfsClient
+import happybase
 import subprocess
 import time
 hdfs = PyWebHdfsClient(host='namenode',port='50070',user_name='root')
+conn=happybase.Connection('127.0.0.1')
 for  a_net in range(54,55):
   for bnet in range(0,256):
     IPADDR=str(a_net)+'.'+str(bnet)+'.0.0/16'
