@@ -8,7 +8,7 @@ A Web Spider/Indexer in Python for Hadoop
 Requirements:
   * Hadoop
   * Hbase including running the thrift server
-
+  * Robert David Graham's excellent masscan tool https://github.com/robertdavidgraham/masscan
 
 ####HBase setup:
 I've created both the tables inside the HBase shell via these commands:
@@ -20,3 +20,5 @@ create 'anet', 'data'
 
 ####HDFS setup:
 TBD
+
+
