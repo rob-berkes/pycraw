@@ -17,7 +17,7 @@ timeout = 5
 socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
 ANET=187
-for BNET in range(0,10):
+for BNET in range(1,10):
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
   FNAME='user/root/scans/'+str(ANET)+'/'+SCANSITESFILE
   SSFP=open(SCANSITESFILE,'w')
@@ -61,16 +61,28 @@ for BNET in range(0,10):
     TFP.write(WRITEOUT.encode('utf-8'))
     TFP.close()
     PAGETITLE=''
-    PAGETITLE=soup.title.string
+    try:
+      PAGETITLE=soup.title.string
+    except:
+      pass
     try:
       PAGETITLE=PAGETITLE.encode('utf-8')
+    except:
+      pass
+    try:
       PAGETITLE=unicode(PAGETITLE)
     except:
       pass
     HOSTPAGE=''
     try:
       HOSTPAGE,b,c=socket.gethostbyaddr(line[1])
+    except:
+      pass
+    try:
       HOSTPAGE=HOSTPAGE.encode('utf-8')
+    except:
+      pass
+    try:
       HOSTPAGE=unicode(HOSTPAGE)
     except:
       pass
