@@ -16,7 +16,7 @@ MAXLOCALLINKCOUNT = 30
 timeout = 5
 socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
-ANET=193
+ANET=187
 for BNET in range(0,10):
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
   FNAME='user/root/scans/'+str(ANET)+'/'+SCANSITESFILE
@@ -62,9 +62,16 @@ for BNET in range(0,10):
     TFP.close()
     PAGETITLE=''
     PAGETITLE=soup.title.string
+    try:
+      PAGETITLE=PAGETITLE.encode('utf-8')
+      PAGETITLE=unicode(PAGETITLE)
+    except:
+      pass
     HOSTPAGE=''
     try:
       HOSTPAGE,b,c=socket.gethostbyaddr(line[1])
+      HOSTPAGE=HOSTPAGE.encode('utf-8')
+      HOSTPAGE=unicode(HOSTPAGE)
     except:
       pass
    # position=0
