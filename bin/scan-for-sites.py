@@ -7,8 +7,8 @@ HBASE_NODE='data2'
 hdfs = PyWebHdfsClient(host='namenode',port='50070',user_name='root')
 conn=happybase.Connection(HBASE_NODE)
 t=conn.table('anet')
-START=randint(1,255)
-for  a_net in range(START,START+1):
+while True:
+  a_net=randint(1,255)
   ROW=t.row(str(a_net))
   if len(ROW) > 0:
     for key, value in ROW.items():
@@ -16,6 +16,7 @@ for  a_net in range(START,START+1):
           START=randint(1,255)
 	  continue
   t.put(str(a_net),{'data:user':'thisnode'})
+  print 'scanning the major '+str(a_net)+'.0.0.0/8 subnet'
   for bnet in range(0,256):
     if a_net==10:
        continue
