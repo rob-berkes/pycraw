@@ -24,6 +24,8 @@ while True:
        continue
     elif a_net==172 and bnet==16:
        continue
+    elif a_net==127:
+       continue
     IPADDR=str(a_net)+'.'+str(bnet)+'.0.0/16'
     OFILE=str(a_net)+'-'+str(bnet)+'-p80.log'
     A=subprocess.Popen(['masscan','-p80','-oG',OFILE,IPADDR,'--rate=2000'])
