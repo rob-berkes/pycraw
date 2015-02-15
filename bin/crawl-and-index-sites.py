@@ -8,16 +8,16 @@ import os
 import happybase
 import re
 import pickle
-
+THRIFTNODE='data2'
 client=PyWebHdfsClient(host='namenode',port='50070',user_name='root')
-conn=happybase.Connection('127.0.0.1')
+conn=happybase.Connection(THRIFTNODE) 
 crawls=conn.table('crawls')
 MAXLOCALLINKCOUNT = 30
 timeout = 5
 socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
-ANET=60
-for BNET in range(0,11):
+ANET=193
+for BNET in range(0,10):
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
   FNAME='user/root/scans/'+str(ANET)+'/'+SCANSITESFILE
   SSFP=open(SCANSITESFILE,'w')
@@ -60,12 +60,23 @@ for BNET in range(0,11):
     WORDLIST=WORDLIST.strip().split()
     TFP.write(WRITEOUT.encode('utf-8'))
     TFP.close()
+    PAGETITLE=''
+    PAGETITLE=soup.title.string
+    HOSTPAGE=''
+    try:
+      HOSTPAGE,b,c=socket.gethostbyaddr(line[1])
+    except:
+      pass
+   # position=0
+   # for word in WORDLIST:
+   #   position+=1
+   #   words.put(line[1],{'metadata:word':word,'metadata:pagetitle':PAGETITLE,'metadata:position':position})
     with open(TEXTFILE) as tfp:
 	client.create_file(HADOOP_TEXTFILE,tfp)
 
     time.sleep(1)
     
-    crawls.put(line[1],{'METADATA:daterun':DATESTRING,'METADATA:ipaddr':line[1],'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE,'METADATA:scanLocation':FNAME,'PAGEDATA:wordlist':pickle.dumps(WORDLIST)})
+    crawls.put(line[1],{'METADATA:daterun':DATESTRING,'METADATA:ipaddr':line[1],'METADATA:domain':HOSTPAGE,'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE,'METADATA:scanLocation':FNAME,'METADATA:numberOfWords':str(len(WORDLIST)),'PAGEDATA:wordlist':pickle.dumps(WORDLIST),'PAGEDATA:pagetitle':PAGETITLE})
     os.remove(HTMLFILE)
     os.remove(TEXTFILE)
   ifp.close()
