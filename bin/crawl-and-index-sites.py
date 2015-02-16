@@ -17,7 +17,7 @@ timeout = 5
 socket.setdefaulttimeout(timeout)
 DATESTRING=str(time.strftime('%Y%m%d'))
 ANET=187
-for BNET in range(1,10):
+for BNET in range(5,10):
   SCANSITESFILE=str(ANET)+'-'+str(BNET)+'-p80.log'
   FNAME='user/root/scans/'+str(ANET)+'/'+SCANSITESFILE
   SSFP=open(SCANSITESFILE,'w')
@@ -52,7 +52,11 @@ for BNET in range(1,10):
     HFP.write(soup.encode('utf-8'))
     HFP.close()
     with open(HTMLFILE) as hfp:
-      client.create_file(HADOOP_HTMLFILE,hfp)
+      try:
+        client.create_file(HADOOP_HTMLFILE,hfp)
+      except:
+        client.delete_file_dir(HADOOP_HTMLFILE)
+        client.create_file(HADOOP_HTMLFILE,hfp)
 
     TFP=open(TEXTFILE,'w')
     WRITEOUT=unicode(soup.get_text())
@@ -91,8 +95,11 @@ for BNET in range(1,10):
    #   position+=1
    #   words.put(line[1],{'metadata:word':word,'metadata:pagetitle':PAGETITLE,'metadata:position':position})
     with open(TEXTFILE) as tfp:
-	client.create_file(HADOOP_TEXTFILE,tfp)
-
+        try:
+	  client.create_file(HADOOP_TEXTFILE,tfp)
+        except:
+	  client.delete_file_dir(HADOOP_TEXTFILE)
+	  client.create_file(HADOOP_TEXTFILE,tfp)
     time.sleep(1)
     
     crawls.put(line[1],{'METADATA:daterun':DATESTRING,'METADATA:ipaddr':line[1],'METADATA:domain':HOSTPAGE,'METADATA:htmlLocation':HADOOP_HTMLFILE,'METADATA:textLocation':HADOOP_TEXTFILE,'METADATA:scanLocation':FNAME,'METADATA:numberOfWords':str(len(WORDLIST)),'PAGEDATA:wordlist':pickle.dumps(WORDLIST),'PAGEDATA:pagetitle':PAGETITLE})
